@@ -1,0 +1,6 @@
+[submodule "Rapat"]
+	path = Rapat
+	url = https://github.com/Nam-exx00/Rapat.git
+[submodule "Corak Cipta"]
+	path = Corak Cipta
+	url = https://github.com/Nam-exx00/Corak-Cipta.git
