@@ -43,7 +43,7 @@ let rec main argd =
         if argd.[0].StartsWith '-' then argd.[0] <- argd.[0].TrimStart('-')
 
         if argd.[0] = "version" then
-            stdout.WriteLine "Rapat Compiler Snapshot 20260716-00"
+            stdout.WriteLine "Rapat Compiler Snapshot 20260716-02"
             stdout.WriteLine "Copyright (C) Nam_exx00"
             0
         elif argd.[0] = "help" then help()

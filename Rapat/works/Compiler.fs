@@ -16,7 +16,7 @@ type Compiler =
     static let ex = List<string>()
     static let txt = StringBuilder ""
     static let dat = StringBuilder ";gb\n"
-    static let main = StringBuilder "define i32 @main() {\n"
+    static let main = StringBuilder "define i32 @main() {\nmain:\n"
 
     static let vn = List<string>()
     static let vt = List<int>()
@@ -28,7 +28,10 @@ type Compiler =
     static let mutable lc = 0
     static let mutable vc = 0
     static let mutable cb = main
-    static let mutable mla = false
+    static let mutable mla = true
+    static let mutable pn = List<string>()
+    static let mutable pt = List<string>()
+    static let mutable pid = List<int>()
 
     static let rec Run(code: string) =
         let mutable i = 0
@@ -118,18 +121,25 @@ type Compiler =
                     | ' ' -> ()
                     | '(' -> note <- true
                     | '[' -> gb <- true
-                    | '*' ->
+                    | '`' ->
                         if pb.Count = 2 then
                             let mutable a1 = pb.Pop()
                             let mutable a0 = pb.Pop()
                             let mutable iv = false
                             let mutable vi = -1
+                            let mutable ip2 = false
+                            let mutable pi2 = -1
 
                             if not (a0.StartsWith("n:") || a0.StartsWith("x:") || a0.StartsWith("0x") || a0.StartsWith("8b") || a0.StartsWith("16b") || a0.StartsWith("64b") || a0.StartsWith("c:")) then
-                                for j = 0 to vn.Count - 1 do
-                                    if vn.[j] = a0 then
-                                        iv <- true
-                                        vi <- j
+                                for j = 0 to pn.Count - 1 do
+                                    if pn.[j] = a0 then
+                                        ip2 <- true
+                                        pi2 <- j
+                                if not ip2 then
+                                    for j = 0 to vn.Count - 1 do
+                                        if vn.[j] = a0 then
+                                            iv <- true
+                                            vi <- j
 
                             let mutable inum = false
                             let mutable nv = ""
@@ -144,7 +154,76 @@ type Compiler =
                                 main.Append "main:\n" |> ignore
                                 mla <- true
 
-                            if iv then
+                            if ip2 then
+                                let pidx = pid.[pi2]
+                                match pt.[pi2] with
+                                | "i8" ->
+                                    if a1.StartsWith "n:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i8*\n" p (a1.[2..])) |> ignore
+                                        cb.Append(sprintf "  store i8 %%p%d, i8* %%%d\n" pidx p) |> ignore
+                                    elif a1.StartsWith "x:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i8*\n" p (Convert.ToInt64(a1.[2..], 16).ToString())) |> ignore
+                                        cb.Append(sprintf "  store i8 %%p%d, i8* %%%d\n" pidx p) |> ignore
+                                    else
+                                        tfat "number or hexadecimal"
+                                | "i16" ->
+                                    if a1.StartsWith "n:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i16*\n" p (a1.[2..])) |> ignore
+                                        cb.Append(sprintf "  store i16 %%p%d, i16* %%%d\n" pidx p) |> ignore
+                                    elif a1.StartsWith "x:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i16*\n" p (Convert.ToInt64(a1.[2..], 16).ToString())) |> ignore
+                                        cb.Append(sprintf "  store i16 %%p%d, i16* %%%d\n" pidx p) |> ignore
+                                    else
+                                        tfat "number or hexadecimal"
+                                | "i32" ->
+                                    if a1.StartsWith "n:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i32*\n" p (a1.[2..])) |> ignore
+                                        cb.Append(sprintf "  store i32 %%p%d, i32* %%%d\n" pidx p) |> ignore
+                                    elif a1.StartsWith "x:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i32*\n" p (Convert.ToInt64(a1.[2..], 16).ToString())) |> ignore
+                                        cb.Append(sprintf "  store i32 %%p%d, i32* %%%d\n" pidx p) |> ignore
+                                    else
+                                        tfat "number or hexadecimal"
+                                | "i64" ->
+                                    if a1.StartsWith "n:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i64*\n" p (a1.[2..])) |> ignore
+                                        cb.Append(sprintf "  store i64 %%p%d, i64* %%%d\n" pidx p) |> ignore
+                                    elif a1.StartsWith "x:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i64*\n" p (Convert.ToInt64(a1.[2..], 16).ToString())) |> ignore
+                                        cb.Append(sprintf "  store i64 %%p%d, i64* %%%d\n" pidx p) |> ignore
+                                    else
+                                        tfat "number or hexadecimal"
+                                | "i8*" ->
+                                    if a1.StartsWith "n:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i8*\n" p (a1.[2..])) |> ignore
+                                        cb.Append(sprintf "  store i8* %%p%d, i8* %%%d\n" pidx p) |> ignore
+                                    elif a1.StartsWith "x:" then
+                                        let p = lc
+                                        lc <- lc + 1
+                                        cb.Append(sprintf "  %%%d = inttoptr i32 %s to i8*\n" p (Convert.ToInt64(a1.[2..], 16).ToString())) |> ignore
+                                        cb.Append(sprintf "  store i8* %%p%d, i8* %%%d\n" pidx p) |> ignore
+                                    else
+                                        tfat "number or hexadecimal"
+                                | _ -> tfat "unsupported parameter type"
+                            elif iv then
                                 match vt.[vi] with
                                 | 0 | 1 ->
                                     let t = lc
@@ -443,9 +522,7 @@ type Compiler =
                         else
                             pfat 2
                     | 'f' ->
-                        if pb.Count = 0 || pb.Count = 1 then
-                            pfat 2
-                        elif pb.Count = 2 then
+                        if pb.Count = 2 then
                             let mutable name = pb.Pop().Trim()
                             let mutable c = pb.Pop()
                             let n = fn.Count
@@ -459,6 +536,9 @@ type Compiler =
                             else
                                 fpv.Add false
 
+                            pn.Clear()
+                            pt.Clear()
+                            pid.Clear()
                             fn.Add name
                             Run c
 
@@ -490,6 +570,103 @@ type Compiler =
                                 txt.Append(sprintf "define i32 @f%d() {\n" n) |> ignore
                             txt.Append(fb.ToString()) |> ignore
                             txt.Append "}\n" |> ignore
+                            pn.Clear()
+                            pt.Clear()
+                            pid.Clear()
+                        elif pb.Count = 3 then
+                            let mutable p = pb.Pop()
+                            let mutable name = pb.Pop().Trim()
+                            let mutable c = pb.Pop()
+                            
+                            let pstr = p.Replace("[", "").Replace("]", "").Trim()
+                            
+                            let n = fn.Count
+                            let fb = StringBuilder()
+                            let ob = cb
+                            cb <- fb
+
+                            if name.StartsWith "private:" then
+                                name <- name.[8..].Trim()
+                                fpv.Add true
+                            else
+                                fpv.Add false
+
+                            let mutable pt2 = List<string>()
+                            pn.Clear()
+                            pt.Clear()
+                            pid.Clear()
+                            if pstr <> "" && pstr <> "[]" then
+                                let parts = pstr.Split(',')
+                                let mutable idx = 0
+                                for part in parts do
+                                    let trimmed = part.Trim()
+                                    if trimmed <> "" then
+                                        let colonIdx = trimmed.IndexOf(':')
+                                        if colonIdx > 0 then
+                                            let pname = trimmed.Substring(0, colonIdx)
+                                            let ptype = trimmed.Substring(colonIdx + 1)
+                                            let tm =
+                                                match ptype with
+                                                | "i8" | "char" | "byte" | "c" -> "i8"
+                                                | "i16" | "short" -> "i16"
+                                                | "i32" | "int" -> "i32"
+                                                | "i64" | "long" -> "i64"
+                                                | "ptr" | "i8*" -> "i8*"
+                                                | "i16*" -> "i16*"
+                                                | "i32*" -> "i32*"
+                                                | "i64*" -> "i64*"
+                                                | _ -> 
+                                                    if ptype.StartsWith("8b") then "i8"
+                                                    elif ptype.StartsWith("16b") then "i16"
+                                                    elif ptype.StartsWith("32b") then "i32"
+                                                    elif ptype.StartsWith("64b") then "i64"
+                                                    else ""
+                                            pn.Add(pname)
+                                            pt.Add(tm)
+                                            pt2.Add(tm)
+                                            pid.Add(idx)
+                                            idx <- idx + 1
+                                        else
+                                            tfat "supported types"
+
+                            fpb.Add(pt2.ToArray())
+                            fn.Add name
+                            Run c
+
+                            let result = gbb.ToString().Trim()
+                            if String.IsNullOrEmpty result then
+                                ft.Add 0
+                            elif result.StartsWith "8b:" then
+                                fb.Append(sprintf "  ret i32 %s\n" (result.[3..])) |> ignore
+                                ft.Add 1
+                            elif result.StartsWith "16b:" then
+                                fb.Append(sprintf "  ret i32 %s\n" (result.[4..])) |> ignore
+                                ft.Add 1
+                            elif result.StartsWith "64b:" then
+                                fb.Append(sprintf "  ret i32 %s\n" (result.[4..])) |> ignore
+                                ft.Add 1
+                            elif result.StartsWith "n:" then
+                                fb.Append(sprintf "  ret i32 %s\n" (result.[2..])) |> ignore
+                                ft.Add 1
+                            elif result.StartsWith "x:" then
+                                fb.Append(sprintf "  ret i32 %s\n" (Convert.ToInt64(result.[2..], 16).ToString())) |> ignore
+                                ft.Add 1
+                            else
+                                tfat "supported types"
+
+                            cb <- ob
+                            let paramStr = String.Join(", ", pt2 |> Seq.mapi (fun i t -> sprintf "i32 %%p%d" i))
+                            if fpv.[n] then
+                                txt.Append(sprintf "define private i32 @f%d(%s) {\n" n paramStr) |> ignore
+                            else
+                                txt.Append(sprintf "define i32 @f%d(%s) {\n" n paramStr) |> ignore
+                            txt.Append(fb.ToString()) |> ignore
+                            txt.Append "}\n" |> ignore
+                            pn.Clear()
+                            pt.Clear()
+                            pid.Clear()
+                        else
+                            pfat 2
                     | '$' ->
                         if pb.Count = 1 then
                             let lib = pb.Pop()
@@ -524,86 +701,63 @@ type Compiler =
                                 if count <> 0 then
                                     let fpms = fpb.[j]
                                     if count = fpms.Length then
+                                        let mutable ps = List<string>()
                                         for idx = 0 to count - 1 do
                                             let fpm = fpms.[idx]
                                             let pm = pb.Pop()
-                                            if pm.StartsWith "8b:" then
-                                                if fpm = "8 bits number" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (pm.[3..])) |> ignore
+                                            if pm.StartsWith "c:" then
+                                                let c = pm.[2..]
+                                                if c.Length = 1 then
+                                                    cb.Append(sprintf "  %%p%d = add i32 %d, 0\n" idx (int c.[0])) |> ignore
+                                                    ps.Add(sprintf "i32 %%p%d" idx)
                                                 else
-                                                    tfat fpm
+                                                    fatal "Character size unmatched. Should be 1 character."
+                                            elif pm.StartsWith "8b:" then
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (pm.[3..])) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "8bx:" then
-                                                if fpm = "8 bits hexadecimal" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[4..], 16).ToString())) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[4..], 16).ToString())) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "16b:" then
-                                                if fpm = "16 bits number" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (pm.[4..])) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (pm.[4..])) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "16bx:" then
-                                                if fpm = "16 bits hexadecimal" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[5..], 16).ToString())) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[5..], 16).ToString())) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
+                                            elif pm.StartsWith "32b:" then
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (pm.[4..])) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
+                                            elif pm.StartsWith "32bx:" then
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[5..], 16).ToString())) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "64b:" then
-                                                if fpm = "64 bits number" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (pm.[4..])) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (pm.[4..])) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "64bx:" then
-                                                if fpm = "64 bits hexadecimal" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[5..], 16).ToString())) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[5..], 16).ToString())) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "x:" then
-                                                if fpm = "hexadecimal" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[2..], 16).ToString())) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (Convert.ToInt64(pm.[2..], 16).ToString())) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             elif pm.StartsWith "n:" then
-                                                if fpm = "number" then
-                                                    if cb = main && not mla then
-                                                        main.Append "main:\n" |> ignore
-                                                        mla <- true
-                                                    cb.Append(sprintf "  %%a%d = add i32 %s, 0\n" idx (pm.[2..])) |> ignore
-                                                else
-                                                    tfat fpm
+                                                cb.Append(sprintf "  %%p%d = add i32 %s, 0\n" idx (pm.[2..])) |> ignore
+                                                ps.Add(sprintf "i32 %%p%d" idx)
                                             else
                                                 tfat "supported types"
+                                        if fpv.[j] then
+                                            cb.Append(sprintf "  call i32 @f%d(%s)\n" j (String.Join(", ", ps))) |> ignore
+                                        else
+                                            cb.Append(sprintf "  call i32 @f%d(%s)\n" j (String.Join(", ", ps))) |> ignore
                                     else
                                         pfat fpms.Length
-
-                                if cb = main && not mla then
-                                    main.Append "main:\n" |> ignore
-                                    mla <- true
-
-                                if fpv.[j] then
-                                    cb.Append(sprintf "  call i32 @f%d()\n" j) |> ignore
                                 else
-                                    cb.Append(sprintf "  call i32 @f%d()\n" j) |> ignore
+                                    if cb = main && not mla then
+                                        main.Append "main:\n" |> ignore
+                                        mla <- true
+                                    if fpv.[j] then
+                                        cb.Append(sprintf "  call i32 @f%d()\n" j) |> ignore
+                                    else
+                                        cb.Append(sprintf "  call i32 @f%d()\n" j) |> ignore
                             j <- j - 1
 
                         if not found then
@@ -657,11 +811,11 @@ type Compiler =
 
     static member Compile(code: string) =
         let out = StringBuilder()
-        mla <- false
+        mla <- true
         Run code
 
         if ex.Count = 0 then
-            if main.ToString() <> "define i32 @main() {\n" then
+            if main.ToString() <> "define i32 @main() {\nmain:\n" then
                 out.Append main |> ignore
                 if not (main.ToString().Contains("ret")) then
                     out.Append "  ret i32 0\n" |> ignore
