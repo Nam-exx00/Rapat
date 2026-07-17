@@ -8,6 +8,10 @@
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<OtherFlags>$(OtherFlags) --nowarn:41</OtherFlags>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Compile Include="Compiler.fs" />
 		<Compile Include="Program.fs" />
